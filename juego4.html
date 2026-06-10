@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Construye la Historia - La Cruz del Ilaló</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(160deg, #1a2a4a 0%, #2c4a6e 60%, #1a2a4a 100%);
+    min-height: 100vh;
+    padding: 14px;
+    user-select: none;
+  }
+  h1 {
+    text-align: center;
+    color: #fff8dc;
+    font-size: clamp(17px, 4vw, 26px);
+    margin-bottom: 3px;
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+  }
+  .instruc {
+    text-align: center;
+    color: #9fc8f0;
+    font-size: clamp(11px, 2.2vw, 14px);
+    margin-bottom: 12px;
+  }
+  #progreso-bar-wrap {
+    max-width: 500px;
+    margin: 0 auto 14px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    height: 14px;
+    overflow: hidden;
+  }
+  #progreso-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ffd700, #ffec6e);
+    border-radius: 20px;
+    transition: width 0.5s ease;
+  }
+  .escena {
+    max-width: 500px;
+    margin: 0 auto 14px;
+    background: rgba(255,255,255,0.07);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    min-height: 200px;
+    position: relative;
+  }
+  .escena-numero {
+    position: absolute; top: 10px; left: 14px;
+    font-size: 11px; color: rgba(255,255,255,0.45);
+    font-weight: 600; letter-spacing: 1px;
+  }
+  .escena-imagen { font-size: clamp(56px, 14vw, 80px); margin: 8px 0 10px; line-height: 1; display: block; }
+  .escena-texto {
+    color: #fff8dc;
+    font-size: clamp(13px, 2.8vw, 16px);
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+  .escena-texto .hueco {
+    display: inline-block;
+    background: rgba(255,215,0,0.15);
+    border: 2px dashed rgba(255,215,0,0.6);
+    border-radius: 8px;
+    min-width: 100px;
+    padding: 2px 10px;
+    font-weight: 700;
+    color: #ffd700;
+    vertical-align: middle;
+    transition: background 0.3s, border 0.3s;
+    cursor: default;
+  }
+  .escena-texto .hueco.lleno {
+    background: rgba(255,215,0,0.25);
+    border: 2px solid #ffd700;
+    color: #fff8dc;
+  }
+  .escena-texto .hueco.correcto {
+    background: rgba(100,220,130,0.25);
+    border: 2px solid #64dc82;
+    color: #ccffdd;
+  }
+  .escena-texto .hueco.incorrecto {
+    background: rgba(220,80,80,0.25);
+    border: 2px solid #dc5050;
+    color: #ffcccc;
+    animation: sacudir 0.4s;
+  }
+  @keyframes sacudir {
+    0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+  }
+  .opciones-titulo {
+    text-align: center;
+    color: #9fc8f0;
+    font-size: 12px;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+  .opciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    max-width: 500px;
+    margin: 0 auto 14px;
+  }
+  .opcion {
+    background: rgba(255,255,255,0.12);
+    border: 2px solid rgba(255,255,255,0.25);
+    border-radius: 30px;
+    padding: 10px 20px;
+    color: #fff;
+    font-size: clamp(13px, 2.8vw, 16px);
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s, border 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .opcion:hover { transform: scale(1.07); background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.5); }
+  .opcion:active { transform: scale(0.95); }
+  .opcion.usada { opacity: 0.35; pointer-events: none; }
+  .feedback {
+    max-width: 500px;
+    margin: 0 auto 10px;
+    border-radius: 12px;
+    padding: 10px 16px;
+    text-align: center;
+    font-size: clamp(12px, 2.5vw, 15px);
+    font-weight: 600;
+    min-height: 36px;
+    transition: all 0.3s;
+    color: transparent;
+  }
+  .feedback.ok { background: rgba(100,220,130,0.2); color: #ccffdd; border: 1.5px solid rgba(100,220,130,0.5); }
+  .feedback.mal { background: rgba(220,80,80,0.2); color: #ffcccc; border: 1.5px solid rgba(220,80,80,0.4); }
+  .btn-sig {
+    display: block;
+    margin: 0 auto;
+    background: #ffd700;
+    color: #3a2a00;
+    border: none;
+    border-radius: 30px;
+    padding: 12px 40px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .btn-sig.visible { opacity: 1; pointer-events: auto; }
+  .btn-sig:hover { transform: scale(1.06); }
+  .fin-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.8);
+    align-items: center; justify-content: center;
+    z-index: 100;
+  }
+  .fin-overlay.show { display: flex; }
+  .fin-box {
+    background: linear-gradient(135deg, #fff8dc, #ffe082);
+    border-radius: 20px;
+    padding: 30px 36px;
+    text-align: center;
+    max-width: 340px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .fin-box .trofeo { font-size: 70px; display: block; margin-bottom: 10px; }
+  .fin-box h2 { font-size: 26px; color: #3a2a00; margin-bottom: 10px; }
+  .fin-box p { color: #5a4200; font-size: 14px; line-height: 1.6; margin-bottom: 18px; }
+  .fin-btn { background: #2c4a6e; color: #fff; border: none; border-radius: 24px; padding: 12px 30px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .puntos-hud {
+    text-align: center; color: #ffd700; font-size: 16px; font-weight: 700;
+    margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+<h1>📖 Construye la Historia del Ilaló 📖</h1>
+<p class="instruc">Elige la palabra correcta para completar cada parte del cuento</p>
+
+<div class="puntos-hud">⭐ Puntos: <span id="pts">0</span></div>
+<div id="progreso-bar-wrap"><div id="progreso-bar"></div></div>
+
+<div class="escena" id="escena">
+  <span class="escena-numero" id="num-escena">1 / 6</span>
+  <span class="escena-imagen" id="esc-img">🌄</span>
+  <p class="escena-texto" id="esc-texto"></p>
+</div>
+
+<p class="opciones-titulo">👆 Elige la respuesta correcta</p>
+<div class="opciones" id="opciones"></div>
+<div class="feedback" id="feedback"></div>
+<button class="btn-sig" id="btn-sig" onclick="siguiente()">Siguiente ➡</button>
+
+<div class="fin-overlay" id="fin">
+  <div class="fin-box">
+    <span class="trofeo">🎉</span>
+    <h2>¡Historia completa!</h2>
+    <p id="fin-msg"></p>
+    <button class="fin-btn" onclick="document.getElementById('fin').classList.remove('show'); reiniciar()">¡Jugar de nuevo!</button>
+  </div>
+</div>
+
+<script>
+const PASOS = [
+  {
+    img: '⛰️',
+    texto: 'Hace muchos años, llegó al valle de Tumbaco un sacerdote muy [?] que amaba explorar las montañas.',
+    hueco: 'curioso y aventurero',
+    opciones: [
+      { txt: '🧭 Curioso y aventurero', val: 'curioso y aventurero', ok: true },
+      { txt: '😴 Dormilón y tranquilo', val: 'dormilón y tranquilo', ok: false },
+      { txt: '😡 Gruñón y enojado', val: 'gruñón y enojado', ok: false },
+    ],
+    feedback_ok: '¡Sí! Era muy curioso y le encantaba explorar 🧭',
+    feedback_mal: 'Casi... ¡El sacerdote era curioso y le gustaba aventurarse!',
+  },
+  {
+    img: '🌋',
+    texto: 'Un día, el sacerdote vio el volcán Ilaló y sintió una extraña [?] hacia aquel cerro cubierto de selva.',
+    hueco: 'atracción',
+    opciones: [
+      { txt: '😱 Miedo horrible', val: 'miedo', ok: false },
+      { txt: '✨ Atracción especial', val: 'atracción', ok: true },
+      { txt: '😴 Aburrimiento', val: 'aburrimiento', ok: false },
+    ],
+    feedback_ok: '¡Correcto! Sintió una atracción misteriosa hacia el volcán ✨',
+    feedback_mal: '¡No exactamente! El Ilaló lo atraía, no lo asustaba.',
+  },
+  {
+    img: '🌿',
+    texto: 'El sacerdote intentó subir al Ilaló dos veces, pero la selva [?] y el terreno difícil no lo dejaron llegar.',
+    hueco: 'espesa',
+    opciones: [
+      { txt: '🌳 Espesa y cerrada', val: 'espesa', ok: true },
+      { txt: '🌸 Bonita y fácil', val: 'bonita', ok: false },
+      { txt: '🍂 Seca y sin árboles', val: 'seca', ok: false },
+    ],
+    feedback_ok: '¡Muy bien! La selva espesa y cerrada le bloqueaba el camino 🌿',
+    feedback_mal: '¡No! La selva era espesa y muy difícil de atravesar.',
+  },
+  {
+    img: '🎒',
+    texto: 'Para la tercera vez, el sacerdote se preparó con comida, agua, brújula y una [?] bien cargada.',
+    hueco: 'mochila',
+    opciones: [
+      { txt: '🎒 Una mochila', val: 'mochila', ok: true },
+      { txt: '👑 Una corona de rey', val: 'corona', ok: false },
+      { txt: '🛁 Una bañera', val: 'bañera', ok: false },
+    ],
+    feedback_ok: '¡Exacto! Se preparó bien con una mochila y todo lo necesario 🎒',
+    feedback_mal: '¡Ja! Claro que no… se preparó con una mochila de viaje.',
+  },
+  {
+    img: '🏘️',
+    texto: 'Los vecinos esperaron días y semanas, pero el sacerdote [?]. Nadie supo qué le ocurrió.',
+    hueco: 'nunca regresó',
+    opciones: [
+      { txt: '🏠 Volvió corriendo', val: 'volvió', ok: false },
+      { txt: '❓ Nunca regresó', val: 'nunca regresó', ok: true },
+      { txt: '💤 Se quedó a dormir', val: 'durmió', ok: false },
+    ],
+    feedback_ok: '¡Así es! El sacerdote nunca volvió, y eso es un gran misterio ❓',
+    feedback_mal: 'No… el sacerdote desapareció y nunca volvió al pueblo.',
+  },
+  {
+    img: '✝️',
+    texto: 'Con tristeza y esperanza, los vecinos subieron al Ilaló y pusieron una [?] en lo más alto del cerro.',
+    hueco: 'cruz',
+    opciones: [
+      { txt: '✝️ Una cruz', val: 'cruz', ok: true },
+      { txt: '⛵ Un barco', val: 'barco', ok: false },
+      { txt: '🎡 Una rueda', val: 'rueda', ok: false },
+    ],
+    feedback_ok: '¡Perfecto! Colocaron una cruz para recordar al sacerdote ✝️ ¡Y aún hoy está ahí!',
+    feedback_mal: 'No exactamente… pusieron una cruz, que aún hoy se ve en el cerro.',
+  },
+];
+
+let paso = 0, puntos = 0, respondido = false;
+
+function renderPaso() {
+  const p = PASOS[paso];
+  respondido = false;
+  document.getElementById('num-escena').textContent = (paso+1) + ' / ' + PASOS.length;
+  document.getElementById('esc-img').textContent = p.img;
+  const textoHTML = p.texto.replace('[?]', `<span class="hueco" id="hueco">${'_ _ _'}</span>`);
+  document.getElementById('esc-texto').innerHTML = textoHTML;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('btn-sig').classList.remove('visible');
+  document.getElementById('progreso-bar').style.width = (paso / PASOS.length * 100) + '%';
+
+  const opDiv = document.getElementById('opciones');
+  opDiv.innerHTML = '';
+  const opts = shuffle([...p.opciones]);
+  opts.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'opcion';
+    btn.textContent = o.txt;
+    btn.onclick = () => elegir(o, btn, p);
+    opDiv.appendChild(btn);
+  });
+}
+
+function elegir(o, btn, p) {
+  if (respondido) return;
+  respondido = true;
+  document.querySelectorAll('.opcion').forEach(b => b.classList.add('usada'));
+  const hueco = document.getElementById('hueco');
+  hueco.textContent = p.hueco;
+  const fb = document.getElementById('feedback');
+  if (o.ok) {
+    hueco.classList.add('lleno', 'correcto');
+    btn.style.background = 'rgba(100,220,130,0.3)';
+    btn.style.borderColor = '#64dc82';
+    fb.textContent = p.feedback_ok;
+    fb.className = 'feedback ok';
+    puntos += 10;
+    document.getElementById('pts').textContent = puntos;
+  } else {
+    hueco.classList.add('lleno', 'incorrecto');
+    btn.style.background = 'rgba(220,80,80,0.3)';
+    btn.style.borderColor = '#dc5050';
+    fb.textContent = p.feedback_mal;
+    fb.className = 'feedback mal';
+  }
+  document.getElementById('btn-sig').classList.add('visible');
+}
+
+function siguiente() {
+  paso++;
+  if (paso >= PASOS.length) {
+    document.getElementById('progreso-bar').style.width = '100%';
+    let msg = '¡Completaste toda la historia de la Cruz del Ilaló! ';
+    if (puntos >= 60) msg += '¡Ganaste ' + puntos + ' puntos! ¡Eres un experto del cuento! 🌟🌟🌟';
+    else if (puntos >= 40) msg += '¡Muy bien! Conseguiste ' + puntos + ' puntos. ¡Casi perfecto!';
+    else msg += 'Obtuviste ' + puntos + ' puntos. ¡Inténtalo otra vez para mejorar!';
+    document.getElementById('fin-msg').textContent = msg;
+    document.getElementById('fin').classList.add('show');
+  } else {
+    renderPaso();
+  }
+}
+
+function reiniciar() {
+  paso = 0; puntos = 0;
+  document.getElementById('pts').textContent = '0';
+  renderPaso();
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+renderPaso();
+</script>
+</body>
+</html>

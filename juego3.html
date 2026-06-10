@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego de Memoria - La Cruz del Ilaló</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #1a3a2a 0%, #2d5a3d 50%, #1a3a2a 100%);
+    min-height: 100vh;
+    padding: 16px;
+    user-select: none;
+  }
+  h1 {
+    text-align: center;
+    color: #fff8dc;
+    font-size: clamp(18px, 4vw, 28px);
+    margin-bottom: 4px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+  .subtitle {
+    text-align: center;
+    color: #b8d4a8;
+    font-size: clamp(12px, 2.5vw, 16px);
+    margin-bottom: 14px;
+  }
+  .hud {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .hud-box {
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 12px;
+    padding: 8px 20px;
+    text-align: center;
+    color: #fff;
+  }
+  .hud-box .num {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    color: #ffd700;
+  }
+  .hud-box .lbl {
+    font-size: 11px;
+    color: #b8d4a8;
+    margin-top: 2px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    max-width: 560px;
+    margin: 0 auto 16px;
+  }
+  .card {
+    aspect-ratio: 3/4;
+    cursor: pointer;
+    perspective: 800px;
+    border-radius: 12px;
+  }
+  .card-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease;
+    border-radius: 12px;
+  }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+  .card.matched .card-inner { transform: rotateY(180deg); }
+  .card.matched .card-front { border: 3px solid #ffd700; box-shadow: 0 0 14px rgba(255,215,0,0.6); }
+  .card-back, .card-front {
+    position: absolute; width: 100%; height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .card-back {
+    background: linear-gradient(145deg, #4a7c59, #2d5a3d);
+    border: 2px solid rgba(255,255,255,0.2);
+    font-size: clamp(28px, 6vw, 44px);
+    flex-direction: column;
+    gap: 4px;
+  }
+  .card-back .back-cross { font-size: clamp(32px, 7vw, 52px); }
+  .card-back .back-text { font-size: 10px; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; }
+  .card-front {
+    transform: rotateY(180deg);
+    background: #fff8f0;
+    border: 2px solid rgba(255,255,255,0.4);
+    flex-direction: column;
+    padding: 8px;
+    gap: 6px;
+  }
+  .card-icon { font-size: clamp(30px, 7vw, 50px); line-height: 1; }
+  .card-label {
+    font-size: clamp(9px, 1.8vw, 13px);
+    font-weight: 600;
+    color: #3a2a1a;
+    text-align: center;
+    line-height: 1.2;
+  }
+  #btn-nuevo {
+    display: block;
+    margin: 0 auto;
+    background: #ffd700;
+    color: #3a2a00;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 36px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  #btn-nuevo:hover { transform: scale(1.05); box-shadow: 0 6px 18px rgba(0,0,0,0.4); }
+  #btn-nuevo:active { transform: scale(0.97); }
+  .win-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    align-items: center; justify-content: center;
+    z-index: 100;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .win-overlay.show { display: flex; }
+  .win-box {
+    background: linear-gradient(135deg, #fff8dc, #ffe082);
+    border-radius: 20px;
+    padding: 32px 40px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    max-width: 320px;
+  }
+  .win-box h2 { font-size: 28px; color: #3a2a00; margin-bottom: 8px; }
+  .win-box p { color: #5a4200; font-size: 15px; margin-bottom: 16px; line-height: 1.5; }
+  .win-trofeo { font-size: 72px; display: block; }
+  .win-btn {
+    background: #4a7c59;
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 32px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<h1>🌿 La Cruz del Ilaló 🌿</h1>
+<p class="subtitle">¡Encuentra los pares que se esconden!</p>
+
+<div class="hud">
+  <div class="hud-box">
+    <div class="num" id="pares-txt">0/8</div>
+    <div class="lbl">Pares encontrados</div>
+  </div>
+  <div class="hud-box">
+    <div class="num" id="intentos-txt">0</div>
+    <div class="lbl">Intentos</div>
+  </div>
+  <div class="hud-box">
+    <div class="num" id="tiempo-txt">0s</div>
+    <div class="lbl">Tiempo</div>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+<button id="btn-nuevo" onclick="iniciar()">🔄 Nuevo juego</button>
+
+<div class="win-overlay" id="win">
+  <div class="win-box">
+    <span class="win-trofeo">🏆</span>
+    <h2>¡Lo lograste!</h2>
+    <p id="win-msg"></p>
+    <button class="win-btn" onclick="document.getElementById('win').classList.remove('show'); iniciar()">¡Jugar otra vez!</button>
+  </div>
+</div>
+
+<script>
+const CARDS = [
+  { id:1, icon:'⛪', label:'La iglesia\ndel pueblo' },
+  { id:2, icon:'🌋', label:'El volcán\nIlaló' },
+  { id:3, icon:'✝️', label:'La Cruz\ndel Ilaló' },
+  { id:4, icon:'👨‍⚕️', label:'El sacerdote\naventurero' },
+  { id:5, icon:'🧭', label:'La brújula\ndel viaje' },
+  { id:6, icon:'🌿', label:'La selva\nespesa' },
+  { id:7, icon:'🕯️', label:'La fe\ny esperanza' },
+  { id:8, icon:'🏘️', label:'Los vecinos\ndel valle' },
+];
+
+let flipped = [], matched = 0, intentos = 0, bloqueado = false;
+let timer = null, segundos = 0, empezado = false;
+
+function shuffle(arr) {
+  const a = [...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;
+}
+
+function iniciar() {
+  clearInterval(timer); segundos = 0; empezado = false;
+  flipped = []; matched = 0; intentos = 0; bloqueado = false;
+  document.getElementById('intentos-txt').textContent = '0';
+  document.getElementById('pares-txt').textContent = '0/8';
+  document.getElementById('tiempo-txt').textContent = '0s';
+  renderGrid();
+}
+
+function renderGrid() {
+  const pairs = shuffle([...CARDS, ...CARDS]);
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  pairs.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.dataset.id = c.id;
+    div.dataset.idx = i;
+    div.innerHTML = `<div class="card-inner">
+      <div class="card-back"><span class="back-cross">✝️</span><span class="back-text">Toca aquí</span></div>
+      <div class="card-front"><span class="card-icon">${c.icon}</span><span class="card-label">${c.label.replace('\n','<br>')}</span></div>
+    </div>`;
+    div.addEventListener('click', () => voltear(div));
+    grid.appendChild(div);
+  });
+}
+
+function voltear(div) {
+  if (bloqueado) return;
+  if (div.classList.contains('flipped') || div.classList.contains('matched')) return;
+  if (!empezado) {
+    empezado = true;
+    timer = setInterval(() => { segundos++; document.getElementById('tiempo-txt').textContent = segundos + 's'; }, 1000);
+  }
+  div.classList.add('flipped');
+  flipped.push(div);
+  if (flipped.length === 2) {
+    intentos++;
+    document.getElementById('intentos-txt').textContent = intentos;
+    bloqueado = true;
+    setTimeout(verificar, 900);
+  }
+}
+
+function verificar() {
+  const [a, b] = flipped;
+  if (a.dataset.id === b.dataset.id) {
+    a.classList.replace('flipped','matched');
+    b.classList.replace('flipped','matched');
+    matched++;
+    document.getElementById('pares-txt').textContent = matched + '/8';
+    if (matched === 8) ganar();
+  } else {
+    a.classList.remove('flipped');
+    b.classList.remove('flipped');
+  }
+  flipped = []; bloqueado = false;
+}
+
+function ganar() {
+  clearInterval(timer);
+  let msg = '¡Encontraste todos los pares de la leyenda!\n';
+  if (intentos <= 10) msg += '¡Eres una estrella! 🌟 Solo necesitaste ' + intentos + ' intentos.';
+  else if (intentos <= 16) msg += 'Muy bien, lo hiciste en ' + intentos + ' intentos y ' + segundos + ' segundos.';
+  else msg += 'Lo lograste en ' + intentos + ' intentos. ¡La práctica te hace campeón!';
+  document.getElementById('win-msg').textContent = msg;
+  setTimeout(() => document.getElementById('win').classList.add('show'), 400);
+}
+
+iniciar();
+</script>
+</body>
+</html>

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego 2 – ¿Cuánto Aprendiste? El Puente del Payaso</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+  :root {
+    --azul:     #1a6fa8;
+    --azul-cl:  #3498db;
+    --dorado:   #e8b84b;
+    --verde:    #2d6a2d;
+    --verde-cl: #4caf50;
+    --rojo:     #c0392b;
+    --crema:    #fdf6e3;
+    --marron:   #6b3a2a;
+    --naranja:  #e67e22;
+    --gris:     #7f8c8d;
+    --blanco:   #ffffff;
+    --negro:    #2c2c2c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #0d3b6e 0%, #1a6fa8 50%, #0d4a6e 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: var(--negro);
+  }
+
+  /* ===== CABECERA ===== */
+  .cabecera {
+    max-width: 760px;
+    margin: 0 auto 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .titulo-juego {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.3rem, 4vw, 1.9rem);
+    color: var(--dorado);
+    text-shadow: 2px 2px 0 rgba(0,0,0,.4);
+    flex: 1;
+  }
+  .badge-nivel {
+    background: var(--azul-cl);
+    color: var(--blanco);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: .8rem;
+    font-weight: 800;
+    letter-spacing: .5px;
+    white-space: nowrap;
+  }
+  .marcador {
+    background: rgba(0,0,0,.3);
+    border: 2px solid var(--dorado);
+    border-radius: 12px;
+    padding: 7px 16px;
+    color: var(--dorado);
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+
+  /* ===== CONTENEDOR ===== */
+  .contenedor {
+    max-width: 760px;
+    margin: 0 auto;
+    background: var(--crema);
+    border-radius: 20px;
+    padding: 28px;
+    border: 4px solid var(--dorado);
+    box-shadow: 0 8px 30px rgba(0,0,0,.45);
+    min-height: 420px;
+  }
+
+  /* ===== BARRA PROGRESO ===== */
+  .barra-wrap {
+    background: rgba(0,0,0,.12);
+    border-radius: 20px;
+    height: 14px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .barra-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--azul-cl), var(--dorado));
+    border-radius: 20px;
+    transition: width .45s ease;
+  }
+
+  /* ===== PREGUNTA ===== */
+  .num-pregunta {
+    font-size: .85rem;
+    font-weight: 800;
+    color: var(--gris);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .emoji-pregunta {
+    font-size: 3.5rem;
+    display: block;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .texto-pregunta {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.1rem, 3vw, 1.4rem);
+    color: var(--marron);
+    line-height: 1.35;
+    margin-bottom: 22px;
+    text-align: center;
+  }
+
+  /* ===== OPCIONES ===== */
+  .grid-opciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (max-width:520px) { .grid-opciones { grid-template-columns: 1fr; } }
+
+  .opcion {
+    background: var(--blanco);
+    border: 3px solid #ddd;
+    border-radius: 14px;
+    padding: 13px 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--negro);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .2s, background .2s, transform .15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.4;
+  }
+  .opcion .letra {
+    background: var(--azul-cl); color: var(--blanco);
+    border-radius: 8px; width: 28px; height: 28px; min-width: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fredoka One', cursive; font-size: 1rem; flex-shrink: 0;
+  }
+  .opcion:hover:not(:disabled) { border-color: var(--azul-cl); background: #e3f2fd; transform: scale(1.02); }
+  .opcion.correcta   { border-color: var(--verde-cl) !important; background: #e8f5e9 !important; }
+  .opcion.correcta .letra  { background: var(--verde-cl) !important; }
+  .opcion.incorrecta { border-color: var(--rojo) !important; background: #fdecea !important; animation: shake .4s; }
+  .opcion.incorrecta .letra { background: var(--rojo) !important; }
+  .opcion:disabled   { cursor: default; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25%      { transform: translateX(-7px); }
+    75%      { transform: translateX(7px); }
+  }
+
+  /* ===== FEEDBACK ===== */
+  .feedback {
+    display: none;
+    border-radius: 14px;
+    padding: 13px 16px;
+    font-size: .95rem;
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 18px;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .feedback.ok  { display: flex; background: #e8f5e9; color: var(--verde); border: 2px solid var(--verde-cl); }
+  .feedback.mal { display: flex; background: #fdecea; color: var(--rojo);  border: 2px solid var(--rojo); }
+
+  /* ===== BOTÓN SIGUIENTE ===== */
+  .btn-sig {
+    display: none;
+    width: 100%;
+    padding: 14px;
+    border-radius: 50px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    color: var(--blanco);
+    background: linear-gradient(135deg, var(--azul), var(--azul-cl));
+    border: none; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(26,111,168,.35);
+    transition: transform .15s;
+  }
+  .btn-sig:hover { transform: scale(1.02); }
+
+  /* ===== RESULTADO ===== */
+  .resultado {
+    text-align: center;
+    padding: 28px 18px;
+    animation: pop .4s ease;
+  }
+  @keyframes pop {
+    from { opacity:0; transform:scale(.85); }
+    to   { opacity:1; transform:scale(1); }
+  }
+  .res-emoji  { font-size: 5rem; display:block; margin-bottom:14px; }
+  .res-titulo { font-family:'Fredoka One',cursive; font-size:2rem; color:var(--marron); margin-bottom:10px; }
+  .estrellas  { font-size:2.5rem; margin-bottom:16px; }
+  .res-texto  { font-size:1rem; color:#555; line-height:1.6; margin-bottom:18px; }
+  .moraleja {
+    background:#fff8e1; border:2px solid var(--dorado);
+    border-radius:12px; padding:12px 16px;
+    font-size:.95rem; color:var(--marron); font-style:italic;
+    margin-bottom:24px; line-height:1.5;
+  }
+  .btn-nuevo {
+    padding:13px 34px; border-radius:50px;
+    font-family:'Fredoka One',cursive; font-size:1.1rem;
+    color:var(--blanco);
+    background:linear-gradient(135deg, var(--naranja), var(--dorado));
+    border:none; cursor:pointer;
+    box-shadow:0 4px 14px rgba(230,126,34,.4);
+    transition:transform .15s;
+  }
+  .btn-nuevo:hover { transform:scale(1.04); }
+
+  /* ===== TABLA RESUMEN ===== */
+  .tabla-resumen {
+    width: 100%; border-collapse: collapse;
+    margin-bottom: 20px; font-size: .88rem;
+    text-align: left;
+  }
+  .tabla-resumen th {
+    background: var(--azul); color: var(--blanco);
+    padding: 8px 12px; font-family: 'Fredoka One', cursive;
+  }
+  .tabla-resumen td { padding: 7px 12px; border-bottom: 1px solid #eee; color: #444; }
+  .tabla-resumen tr.ok  td { background: #f1fff3; }
+  .tabla-resumen tr.mal td { background: #fff3f3; }
+  .tick { font-size: 1.1rem; }
+
+  /* ===== CONFETI ===== */
+  .confeti-layer { pointer-events:none; position:fixed; inset:0; z-index:999; overflow:hidden; }
+  .c-item { position:absolute; top:-20px; animation:caer linear forwards; }
+  @keyframes caer { to { transform:translateY(110vh) rotate(720deg); opacity:0; } }
+
+  @media(max-width:600px) {
+    .contenedor { padding:16px 12px; }
+    .texto-pregunta { font-size:1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="confeti-layer" id="confeti"></div>
+
+<div class="cabecera">
+  <h1 class="titulo-juego">🧠 ¿Cuánto Aprendiste?</h1>
+  <span class="badge-nivel">5.º Básica · 9-10 años</span>
+  <div class="marcador" id="marcador">⭐ 0 / 7</div>
+</div>
+
+<div class="contenedor" id="contenedor"></div>
+
+<script>
+/* ---- PREGUNTAS ---- */
+const Q = [
+  {
+    emoji:'🗺️',
+    texto:'¿En qué parroquia ocurrió la leyenda del Puente del Payaso?',
+    ops:['Tumbaco, Pichincha','Quito Centro, Pichincha','Guayaquil, Guayas','Riobamba, Chimborazo'],
+    ok:0,
+    exp:'¡Correcto! La leyenda ocurre en la tranquila parroquia de Tumbaco, en la provincia de Pichincha.',
+  },
+  {
+    emoji:'🎊',
+    texto:'¿Qué fiestas celebraban los habitantes de Tumbaco cuando ocurrió la historia?',
+    ops:['Carnaval','Fiestas de San Pedro y San Pablo','Fiestas de Navidad','Año Nuevo'],
+    ok:1,
+    exp:'Las fiestas de San Pedro y San Pablo eran el gran festejo del pueblo, con música, comida y desfiles.',
+  },
+  {
+    emoji:'🌭',
+    texto:'¿Qué objeto especial llevaban los payasitos en la mano durante el desfile?',
+    ops:['Un globo de colores','Una vela encendida','Un chorizo como bastón','Una trompeta'],
+    ok:2,
+    exp:'¡Así es! Los payasitos llevaban siempre un chorizo que usaban como bastón y hacían reír a todos.',
+  },
+  {
+    emoji:'🍺',
+    texto:'¿Qué bebidas les ofrecían los vecinos a los payasos durante la fiesta?',
+    ops:['Agua y jugo de mora','Cerveza, aguardiente y canelazos','Cola y chicha morada','Leche y chocolate caliente'],
+    ok:1,
+    exp:'El sol abrasador de junio hacía que todos buscaran refrescarse. Los vecinos les ofrecían cerveza, aguardiente y canelazos.',
+  },
+  {
+    emoji:'🌉',
+    texto:'¿Qué le ocurrió al payasito cuando llegó a la quebrada del Común?',
+    ops:[
+      'Se sentó a descansar y se quedó dormido',
+      'Encontró a sus amigos y siguieron festejando',
+      'Perdió el equilibrio y cayó al abismo de la quebrada',
+      'Cruzó el puente sin ningún problema',
+    ],
+    ok:2,
+    exp:'Desorientado por el alcohol y el cansancio, el suelo estaba resbaloso y perdió el equilibrio, cayendo al abismo.',
+  },
+  {
+    emoji:'👂',
+    texto:'¿Qué escuchaban los vecinos al pasar por el puente después de aquella noche?',
+    ops:[
+      'El sonido del río y los pájaros cantando',
+      'Risas agudas y la voz que gritaba "¡Payasito, payasón…!"',
+      'Música de banda de pueblo',
+      'El llanto de un niño perdido en la oscuridad',
+    ],
+    ok:1,
+    exp:'Desde aquella noche, risas agudas e infantiles resonaban entre los árboles, y a veces la misma voz del payaso.',
+  },
+  {
+    emoji:'💡',
+    texto:'¿Cuál es la principal enseñanza de la leyenda del Puente del Payaso?',
+    ops:[
+      'Que los payasos son figuras peligrosas',
+      'Que no debemos salir de noche bajo ninguna circunstancia',
+      'Que debemos tomar decisiones con responsabilidad y no excedernos',
+      'Que hay que evitar completamente las fiestas del pueblo',
+    ],
+    ok:2,
+    exp:'¡Exacto! La leyenda nos enseña a cuidar nuestras decisiones, especialmente en momentos de diversión, y a actuar con responsabilidad.',
+  },
+];
+
+let actual = 0, correctas = 0, respondida = false;
+const LETRAS = ['A','B','C','D'];
+
+/* ---- RENDER PREGUNTA ---- */
+function renderP() {
+  respondida = false;
+  const p = Q[actual];
+  const progPct = Math.round(actual / Q.length * 100);
+  document.getElementById('marcador').textContent = `⭐ ${correctas} / ${Q.length}`;
+
+  document.getElementById('contenedor').innerHTML = `
+    <div class="barra-wrap"><div class="barra-fill" style="width:${progPct}%"></div></div>
+    <div class="num-pregunta">Pregunta ${actual+1} de ${Q.length}</div>
+    <span class="emoji-pregunta">${p.emoji}</span>
+    <div class="texto-pregunta">${p.texto}</div>
+    <div class="grid-opciones">
+      ${p.ops.map((op,i) => `
+        <button class="opcion" id="op${i}" onclick="responder(${i})">
+          <span class="letra">${LETRAS[i]}</span>${op}
+        </button>
+      `).join('')}
+    </div>
+    <div class="feedback" id="fb"></div>
+    <button class="btn-sig" id="btnSig" onclick="siguiente()">
+      ${actual+1 < Q.length ? 'Siguiente pregunta →' : '¡Ver resultados! 🏆'}
+    </button>
+  `;
+}
+
+/* ---- RESPONDER ---- */
+function responder(idx) {
+  if (respondida) return;
+  respondida = true;
+  const p = Q[actual];
+  const correcto = idx === p.ok;
+  if (correcto) correctas++;
+
+  for (let i = 0; i < p.ops.length; i++) {
+    const btn = document.getElementById(`op${i}`);
+    btn.disabled = true;
+    if (i === p.ok) btn.classList.add('correcta');
+    else if (i === idx) btn.classList.add('incorrecta');
+  }
+
+  const fb = document.getElementById('fb');
+  fb.className = `feedback ${correcto ? 'ok' : 'mal'}`;
+  fb.innerHTML = `<span>${correcto ? '✅' : '❌'}</span>
+    <span><strong>${correcto ? '¡Muy bien!' : 'No es esa…'}</strong> ${p.exp}</span>`;
+
+  document.getElementById('marcador').textContent = `⭐ ${correctas} / ${Q.length}`;
+  document.getElementById('btnSig').style.display = 'block';
+}
+
+/* ---- SIGUIENTE ---- */
+function siguiente() {
+  actual++;
+  if (actual < Q.length) renderP();
+  else mostrarResultado();
+}
+
+/* ---- RESULTADO ---- */
+function mostrarResultado() {
+  const pct = correctas / Q.length;
+  const est = pct >= .85 ? '⭐⭐⭐' : pct >= .57 ? '⭐⭐' : '⭐';
+  let emoji, titulo, msg;
+  if (pct === 1)      { emoji='🏆'; titulo='¡Perfecto!';      msg=`Respondiste bien las <strong>${Q.length}</strong> preguntas. ¡Eres un experto en la leyenda!`; lanzarConfeti(); }
+  else if (pct >= .7) { emoji='🌟'; titulo='¡Muy bien!';      msg=`Acertaste <strong>${correctas} de ${Q.length}</strong> preguntas. ¡Casi lo tienes todo!`; lanzarConfeti(); }
+  else if (pct >= .5) { emoji='😊'; titulo='¡Bien hecho!';    msg=`Acertaste <strong>${correctas} de ${Q.length}</strong> preguntas. Repasa la leyenda y mejorarás.`; }
+  else                { emoji='💪'; titulo='¡Sigue practicando!'; msg=`Acertaste <strong>${correctas} de ${Q.length}</strong> preguntas. ¡Lee bien la leyenda y vuelve a intentarlo!`; }
+
+  // Tabla resumen
+  const filas = Q.map((q, i) => {
+    // No guardamos respuesta del usuario aquí, sólo si fue correcta o no
+    // Se usa un array de respuestas guardadas
+    const r = window.respuestas[i];
+    const bien = r === q.ok;
+    return `<tr class="${bien?'ok':'mal'}">
+      <td><span class="tick">${bien?'✅':'❌'}</span></td>
+      <td>${q.emoji} ${q.texto.substring(0,55)}…</td>
+      <td>${q.ops[q.ok]}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('contenedor').innerHTML = `
+    <div class="resultado">
+      <span class="res-emoji">${emoji}</span>
+      <h2 class="res-titulo">${titulo}</h2>
+      <div class="estrellas">${est}</div>
+      <p class="res-texto">${msg}</p>
+      <details style="margin-bottom:18px;text-align:left">
+        <summary style="cursor:pointer;font-weight:800;color:var(--azul);font-size:.95rem;margin-bottom:8px">
+          📋 Ver resumen de respuestas
+        </summary>
+        <table class="tabla-resumen">
+          <tr><th>#</th><th>Pregunta</th><th>Respuesta correcta</th></tr>
+          ${filas}
+        </table>
+      </details>
+      <div class="moraleja">
+        🌉 <em>"Nunca burles la vida, nunca tomes más de lo que puedas soportar… y jamás subestimes el silencio de la noche en Tumbaco."</em>
+      </div>
+      <button class="btn-nuevo" onclick="reiniciar()">🔄 Jugar de nuevo</button>
+    </div>
+  `;
+  document.getElementById('marcador').textContent = `⭐ ${correctas} / ${Q.length}`;
+}
+
+/* ---- REINICIAR ---- */
+function reiniciar() {
+  actual = 0; correctas = 0; respondida = false;
+  window.respuestas = [];
+  renderP();
+}
+
+/* ---- GUARDAR RESPUESTAS ---- */
+// Wrapper para guardar respuesta por índice
+const _responder = responder;
+window.respuestas = [];
+window.responder = function(idx) {
+  window.respuestas[actual] = idx;
+  _responder(idx);
+};
+
+/* ---- CONFETI ---- */
+function lanzarConfeti() {
+  const c = document.getElementById('confeti');
+  c.innerHTML = '';
+  const cols = ['#e8b84b','#4caf50','#3498db','#e74c3c','#9b59b6','#1abc9c'];
+  for (let i = 0; i < 80; i++) {
+    const d = document.createElement('div');
+    d.className = 'c-item';
+    const sz = 8 + Math.random() * 10;
+    d.style.cssText = `left:${Math.random()*100}%;background:${cols[~~(Math.random()*cols.length)]};
+      width:${sz}px;height:${sz}px;border-radius:${Math.random()>.5?'50%':'3px'};
+      animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*.8}s;`;
+    c.appendChild(d);
+  }
+  setTimeout(() => c.innerHTML = '', 3500);
+}
+
+renderP();
+</script>
+</body>
+</html>

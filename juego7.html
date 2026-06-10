@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memoria - La Virgen del Rosario</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap');
+
+  :root {
+    --azul: #1a3a5c;
+    --azul-claro: #2d6a9f;
+    --dorado: #d4a843;
+    --crema: #fdf6e3;
+    --blanco: #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: linear-gradient(135deg, #0d2137 0%, #1a3a5c 50%, #0d2137 100%);
+    font-family: 'Lato', sans-serif;
+    min-height: 100vh;
+    color: var(--blanco);
+  }
+
+  .contenedor { max-width: 700px; margin: 0 auto; padding: 25px 15px; }
+
+  .cabecera { text-align: center; margin-bottom: 25px; }
+  .cabecera .icono { font-size: 3rem; display: block; margin-bottom: 8px; animation: brillo 2s ease-in-out infinite; }
+  @keyframes brillo { 0%,100%{filter:drop-shadow(0 0 5px rgba(212,168,67,0.3))} 50%{filter:drop-shadow(0 0 20px rgba(212,168,67,0.8))} }
+
+  .cabecera h1 { font-family: 'Cinzel', serif; font-size: 1.6rem; color: var(--dorado); letter-spacing: 2px; }
+  .cabecera p { color: #8ab4d4; font-size: 0.9rem; margin-top: 5px; }
+
+  .stats {
+    display: flex; justify-content: center; gap: 30px;
+    margin-bottom: 20px; font-family: 'Cinzel', serif;
+  }
+  .stat { text-align: center; }
+  .stat-valor { font-size: 2rem; color: var(--dorado); font-weight: 700; }
+  .stat-label { font-size: 0.75rem; color: #8ab4d4; text-transform: uppercase; letter-spacing: 1px; }
+
+  .tablero {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .carta {
+    aspect-ratio: 1;
+    cursor: pointer;
+    perspective: 600px;
+    border-radius: 12px;
+  }
+
+  .carta-interior {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease;
+    border-radius: 12px;
+  }
+
+  .carta.volteada .carta-interior,
+  .carta.encontrada .carta-interior {
+    transform: rotateY(180deg);
+  }
+
+  .cara { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px; }
+
+  .cara-trasera {
+    background: linear-gradient(135deg, var(--azul), var(--azul-claro));
+    border: 2px solid rgba(212,168,67,0.3);
+    font-size: 1.8rem;
+  }
+
+  .cara-trasera::after {
+    content: '✦';
+    color: rgba(212,168,67,0.4);
+    font-size: 1.5rem;
+  }
+
+  .cara-frontal {
+    background: linear-gradient(135deg, #f8f0d8, var(--crema));
+    border: 2px solid var(--dorado);
+    transform: rotateY(180deg);
+    color: var(--azul);
+    text-align: center;
+  }
+
+  .carta.encontrada .cara-frontal {
+    background: linear-gradient(135deg, #d4edda, #a8d5b5);
+    border-color: #27ae60;
+    animation: encontradaAnim 0.5s ease;
+  }
+
+  @keyframes encontradaAnim {
+    0%,100%{transform:rotateY(180deg) scale(1)}
+    50%{transform:rotateY(180deg) scale(1.08)}
+  }
+
+  .carta-emoji { font-size: 1.8rem; margin-bottom: 4px; }
+  .carta-texto { font-size: 0.65rem; font-weight: 700; color: var(--azul); text-align: center; line-height: 1.2; }
+
+  .mensaje {
+    text-align: center; padding: 15px; border-radius: 12px;
+    margin-bottom: 15px; display: none;
+    animation: aparecer 0.4s ease;
+  }
+  @keyframes aparecer { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+
+  .mensaje.exito {
+    background: rgba(39,174,96,0.2); border: 1px solid #27ae60; display: block;
+  }
+
+  .mensaje h2 { font-family: 'Cinzel', serif; color: var(--dorado); font-size: 1.4rem; margin-bottom: 5px; }
+  .mensaje p { color: #aaa; font-size: 0.9rem; }
+
+  .btn {
+    display: block; width: 100%; padding: 13px;
+    background: linear-gradient(135deg, var(--azul-claro), var(--azul));
+    border: 1px solid var(--dorado); border-radius: 10px;
+    color: var(--dorado); font-family: 'Cinzel', serif;
+    font-size: 0.9rem; letter-spacing: 2px; cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+</style>
+</head>
+<body>
+<div class="contenedor">
+
+  <div class="cabecera">
+    <span class="icono">🕊️</span>
+    <h1>La Virgen del Rosario</h1>
+    <p>Encuentra las parejas de personajes y elementos de la leyenda</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-valor" id="movimientos">0</div><div class="stat-label">Movimientos</div></div>
+    <div class="stat"><div class="stat-valor" id="parejas">0</div><div class="stat-label">Parejas</div></div>
+    <div class="stat"><div class="stat-valor" id="tiempo">0</div><div class="stat-label">Segundos</div></div>
+  </div>
+
+  <div class="tablero" id="tablero"></div>
+  <div class="mensaje exito" id="mensaje">
+    <h2>🏆 ¡Completado!</h2>
+    <p id="texto-mensaje"></p>
+  </div>
+  <button class="btn" onclick="iniciar()">⟳ Nueva Partida</button>
+
+</div>
+
+<script>
+const pares = [
+  { emoji: '🌊', texto: 'Río\nPiscobamba' },
+  { emoji: '🙏', texto: 'La Virgen\ndel Rosario' },
+  { emoji: '🏘️', texto: 'Barrio de\nTumianuma' },
+  { emoji: '🧙', texto: 'El\nEspíritu' },
+  { emoji: '⛪', texto: 'La\nCapillita' },
+  { emoji: '🎉', texto: 'Fiesta\n15 de agosto' },
+  { emoji: '🏡', texto: 'Casa de\nHipólito' },
+  { emoji: '🕯️', texto: 'Fe del\nPueblo' }
+];
+
+let cartas = [], volteadas = [], encontradas = 0, movimientos = 0, bloqueado = false;
+let intervalo = null, segundos = 0, iniciado = false;
+
+function mezclar(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function iniciar() {
+  clearInterval(intervalo);
+  segundos = 0; movimientos = 0; encontradas = 0; volteadas = []; bloqueado = false; iniciado = false;
+  document.getElementById('movimientos').textContent = '0';
+  document.getElementById('parejas').textContent = '0';
+  document.getElementById('tiempo').textContent = '0';
+  document.getElementById('mensaje').style.display = 'none';
+
+  const dobles = mezclar([...pares, ...pares].map((p, i) => ({ ...p, id: i })));
+  cartas = dobles;
+  renderizar();
+}
+
+function renderizar() {
+  const tablero = document.getElementById('tablero');
+  tablero.innerHTML = '';
+  cartas.forEach((carta, idx) => {
+    const div = document.createElement('div');
+    div.className = 'carta';
+    div.dataset.idx = idx;
+    div.innerHTML = `
+      <div class="carta-interior">
+        <div class="cara cara-trasera"></div>
+        <div class="cara cara-frontal">
+          <div class="carta-emoji">${carta.emoji}</div>
+          <div class="carta-texto">${carta.texto}</div>
+        </div>
+      </div>`;
+    div.addEventListener('click', () => voltear(idx));
+    tablero.appendChild(div);
+  });
+}
+
+function voltear(idx) {
+  if (bloqueado || volteadas.length === 2) return;
+  const divs = document.querySelectorAll('.carta');
+  const div = divs[idx];
+  if (div.classList.contains('volteada') || div.classList.contains('encontrada')) return;
+
+  if (!iniciado) {
+    iniciado = true;
+    intervalo = setInterval(() => {
+      segundos++;
+      document.getElementById('tiempo').textContent = segundos;
+    }, 1000);
+  }
+
+  div.classList.add('volteada');
+  volteadas.push(idx);
+
+  if (volteadas.length === 2) {
+    movimientos++;
+    document.getElementById('movimientos').textContent = movimientos;
+    bloqueado = true;
+    setTimeout(verificar, 800);
+  }
+}
+
+function verificar() {
+  const [a, b] = volteadas;
+  const divs = document.querySelectorAll('.carta');
+  if (cartas[a].emoji === cartas[b].emoji) {
+    divs[a].classList.remove('volteada');
+    divs[b].classList.remove('volteada');
+    divs[a].classList.add('encontrada');
+    divs[b].classList.add('encontrada');
+    encontradas++;
+    document.getElementById('parejas').textContent = encontradas;
+    if (encontradas === pares.length) {
+      clearInterval(intervalo);
+      setTimeout(() => {
+        document.getElementById('texto-mensaje').textContent = `¡Encontraste las ${pares.length} parejas en ${movimientos} movimientos y ${segundos} segundos!`;
+        document.getElementById('mensaje').style.display = 'block';
+      }, 400);
+    }
+  } else {
+    divs[a].classList.remove('volteada');
+    divs[b].classList.remove('volteada');
+  }
+  volteadas = [];
+  bloqueado = false;
+}
+
+iniciar();
+</script>
+</body>
+</html>
